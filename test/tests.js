@@ -50,8 +50,9 @@ describe('flex-contract', function() {
 	it('can transfer tokens via default account', async function() {
 		const amount = _.random(1, 1000);
 		const to = randomAccount();
-		const receipt = await lib.sendTokens(token.address, to.address, amount,
+		const {tx} = await lib.sendTokens(token.address, to.address, amount,
 			{provider: provider});
+		const receipt = await tx;
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -59,8 +60,9 @@ describe('flex-contract', function() {
 	it('can transfer tokens via private key', async function() {
 		const amount = _.random(1, 1000);
 		const to = randomAccount();
-		const receipt = await lib.sendTokens(token.address, to.address, amount,
+		const {tx} = await lib.sendTokens(token.address, to.address, amount,
 			{key: accounts[0].key, provider: provider});
+		const receipt = await tx;
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -70,8 +72,9 @@ describe('flex-contract', function() {
 		const to = randomAccount();
 		const PW = crypto.randomBytes(8).toString('hex');
 		const keystore = createKeystore(accounts[0], PW);
-		const receipt = await lib.sendTokens(token.address, to.address, amount,
+		const {tx} = await lib.sendTokens(token.address, to.address, amount,
 			{keystore: keystore, password: PW, provider: provider});
+		const receipt = await tx;
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -82,8 +85,9 @@ describe('flex-contract', function() {
 		const to = randomAccount();
 		const from = fromMnemonic(mnemonic);
 		await fundAccount(from.address, token);
-		const receipt = await lib.sendTokens(token.address, to.address, amount,
+		const {tx} = await lib.sendTokens(token.address, to.address, amount,
 			{mnemonic: mnemonic, provider: provider});
+		const receipt = await tx;
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
