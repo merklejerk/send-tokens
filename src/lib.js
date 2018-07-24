@@ -47,7 +47,8 @@ async function sendTokens(token, to, amount, opts={}) {
 	await verifyTokenBalance(contract, wallet.address, amount);
 	return {tx: contract.transfer(to, amount, {
 		from: wallet.key ? undefined : wallet.address,
-		key: wallet.key
+		key: wallet.key,
+		gasPrice: opts.gasPrice
 	})};
 }
 

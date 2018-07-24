@@ -25,6 +25,7 @@ program
 	.option('-c, --confirmations <n>', `number of confirmations to wait for before returning`, parseInt, 0)
 	.option('-p, --provider <uri>', `provider URI`)
 	.option('-n, --network <name>', 'network name')
+	.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
 	.option('-j, --json', `json output`, false)
 	.action(async function (token, to, amount) {
 		try {
@@ -116,7 +117,12 @@ async function createTransferOpts(program) {
 		opts.providerURI = program.provider;
 	if (program.network)
 		opts.network = program.network;
-	return program;
+
+	if (program.gasPrice) {
+		opts.gasPrice = new BigNumber('1e9').times(program.gasPrice)
+			.integerValue().toString(10);
+	}
+	return opts;
 }
 
 function createLogId(fields) {
