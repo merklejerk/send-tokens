@@ -62,6 +62,7 @@ Usage: send-tokens [options] <token> <to> <amount>
     -c, --confirmations <n>           number of confirmations to wait for before returning (default: 0)
     -p, --provider <uri>              provider URI
     -n, --network <name>              network name
+    -G, --gas-price <gwei>            explicit gas price, in gwei (e.g., 20)
     -j, --json                        json output
     -h, --help                        output usage information
 ```
