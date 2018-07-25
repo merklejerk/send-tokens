@@ -26,7 +26,7 @@ program
 	.option('-p, --provider <uri>', `provider URI`)
 	.option('-n, --network <name>', 'network name')
 	.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
-	.option('-j, --json', `json output`, false)
+	.option('-l, --log <file>', `append a JSON log to a file`)
 	.action(async function (token, to, amount) {
 		try {
 			await run(program, {token: token, to: to, amount: amount});
@@ -48,35 +48,28 @@ async function run(program, args) {
 	if (!/^\d+(\.\d+)?$/.test(args.amount))
 		throw new Error(`Invalid amount: ${args.amount}`);
 
-	const now = _.now();
 	const token = ethjs.isValidAddress(args.to) ? ethjs.toChecksumAddress(args.token) : args.token;
 	const to = ethjs.isValidAddress(args.to) ? ethjs.toChecksumAddress(args.to) : args.to;
 	const amount = toWei(args.amount, program.base || 0);
 	const confirmations = program.confirmations || 0;
 	const opts = await createTransferOpts(program);
 	const wallet = await lib.getWallet(opts);
-	if (!program.json)
-		console.log(`${wallet.address.blue.bold} -> ${amount.yellow.bold} -> ${to.blue.bold}`);
 	const logId = createLogId({
-		time: now,
+		time: _.now(),
 		token: token,
 		to: to,
 		amount: amount,
 		from: wallet.address
 	});
-	const log = program.json ? createJSONLogger(logId) : createTextLogger();
+	const log = program.log ? createJSONLogger(logId, program.log) : _.noop;
+
+	console.log(`Token: ${token.green.bold}`);
+	console.log(`${wallet.address.blue.bold} -> ${amount.yellow.bold} -> ${to.blue.bold}`);
 
 	const {tx} = await lib.sendTokens(token, to, amount, opts);
 	const txId = await tx.txId;
 
-	log({
-		from: wallet.address,
-		amount: amount,
-		token: token,
-		to: to,
-		txId: txId,
-		state: 'pending'
-	}, `Waiting for transaction ${txId.green.bold} to be mined...`);
+	console.log(`Waiting for transaction ${txId.green.bold} to be mined...`);
 
 	const receipt = await tx.confirmed(confirmations);
 
@@ -87,8 +80,8 @@ async function run(program, args) {
 		to: to,
 		txId: txId,
 		gas: receipt.gasUsed,
-		state: 'mined'
-	}, `Done!`);
+		block: receipt.blockNumber,
+	});
 
 	process.exit(0);
 };
@@ -137,14 +130,11 @@ function createLogId(fields) {
 		ethjs.keccak256(Buffer.from(JSON.stringify(s))).slice(0, 8)).slice(2);
 }
 
-function createJSONLogger(logId) {
+function createJSONLogger(logId, file) {
 	return (payload={}) => {
-		console.log(_.assign(payload, {time: _.now(), id: logId}));
-	};
-}
-
-function createTextLogger() {
-	return (payload, msg) => {
-		console.log(msg);
+		const data = _.assign(payload,
+			{time: Math.floor(_.now() / 1000), id: logId});
+		const line = JSON.stringify(data);
+		fs.appendFileSync(file, `${line}\n`);
 	};
 }

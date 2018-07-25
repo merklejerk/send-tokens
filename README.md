@@ -63,38 +63,37 @@ Usage: send-tokens [options] <token> <to> <amount>
     -p, --provider <uri>              provider URI
     -n, --network <name>              network name
     -G, --gas-price <gwei>            explicit gas price, in gwei (e.g., 20)
-    -j, --json                        json output
+    -l, --log                         append a JSON resuly object to a log file on success
     -h, --help                        output usage information
 ```
 
-## JSON Output
-`send-tokens` can output JSON stdout for programmatic log parsing with the
-`--json` option. You can then pipe this output to another executable or to a
-log file.
+## JSON Logs
+If you pass the `--log` option, a JSON object describing the transfer
+will be appended to a file when the transaction is mined, one object per line.
 
-##### Example
-```bash
-$ send-tokens --json --key $PRIVATE_KEY $TOKEN $DST
-# Output:
-   { from: '0x0420DC92A955e3e139b52142f32Bd54C6D46c023',
-     amount: '20',
-     token: '0x1658164265555FA310d20bC601Dd32e9b996A436',
-     to: '0x2621Ea417659Ad69BAE66AF05eBE5788e533E5e8',
-     txId:
-      '0xd9255f8365305ebffd77cb30d09f82745eaa232e42739f5fc2788fa46f1347e3',
-     state: 'pending',
-     time: 1532471209842,
-     id: '88fdd8a4b8084c36' }
-   { from: '0x0420DC92A955e3e139b52142f32Bd54C6D46c023',
-     amount: '20',
-     token: '0x1658164265555FA310d20bC601Dd32e9b996A436',
-     to: '0x2621Ea417659Ad69BAE66AF05eBE5788e533E5e8',
-     txId:
-      '0xd9255f8365305ebffd77cb30d09f82745eaa232e42739f5fc2788fa46f1347e3',
-     gas: 36566,
-     state: 'mined',
-     time: 1532471219246,
-     id: '88fdd8a4b8084c36' }
+##### Log Entries
+Log entries follow this structure:
+```js
+{
+   // Unique transfer ID to identify related logs.
+   id: '88fdd8a4b8084c36',
+   // UNIX time.
+   time: 1532471209842,
+   // Address of token contract.
+   token: '0x1658164265555FA310d20bC601Dd32e9b996A436',
+   // Address of sender.
+   from: '0x0420DC92A955e3e139b52142f32Bd54C6D46c023',
+   // Address of recipient.
+   to: '0x2621Ea417659Ad69BAE66AF05eBE5788e533E5e8',
+   // Amount of tokens sent (in weis).
+   amount: '20',
+   // Transaction ID of transfer.
+   txId: '0xd9255f8365305ebffd77cb30d09f82745eaa232e42739f5fc2788fa46f1347e3',
+   // Block number where the transfer was mined.
+   block: 4912040,
+   // Gas used.
+   gas: 40120
+}
 ```
 
 ## ENS Names
