@@ -92,8 +92,11 @@ function toWei(amount, base=0) {
 
 async function createTransferOpts(program) {
 	const opts = {};
-	if (program.key)
-		opts.key = program.key;
+	if (program.key) {
+		opts.key = ethjs.addHexPrefix(program.key);
+		if (!/^0x[a-f0-9]{64}$/i.test(opts.key.length))
+			throw new Error('Invalid private key.');
+	}
 	else if (program.keyFile)
 		opts.key = await fs.readFile(program.keyFile, 'utf-8');
 	else if (program.keystore) {
