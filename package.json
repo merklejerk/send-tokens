@@ -26,8 +26,8 @@
 		"commander": "^2.16.0",
 		"ethereumjs-util": "^5.2.0",
 		"ethereumjs-wallet": "^0.6.0",
-		"flex-contract": "^1.4.1",
-		"flex-ether": "^1.0.2",
+		"flex-contract": "^1.4.5",
+		"flex-ether": "^1.1.2",
 		"lodash": "^4.17.10",
 		"mz": "^2.7.0"
 	},

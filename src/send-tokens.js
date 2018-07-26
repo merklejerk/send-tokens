@@ -94,7 +94,7 @@ async function createTransferOpts(program) {
 	const opts = {};
 	if (program.key) {
 		opts.key = ethjs.addHexPrefix(program.key);
-		if (!/^0x[a-f0-9]{64}$/i.test(opts.key.length))
+		if (!/^0x[a-f0-9]{64}$/i.test(opts.key))
 			throw new Error('Invalid private key.');
 	}
 	else if (program.keyFile)
