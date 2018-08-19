@@ -115,15 +115,11 @@ must be fully registered with the ENS contract and a resolver.
 
 
 ## Library Usage
-The `send-tokens` package can be used as a (slightly lower-level) library through
-the `sendTokens()` function. As a library, input normalization and logging are
-the responsibility of the caller. Token amounts should be expressed as either
-hex-encoded (`0x...`) or base-10 **strings** to avoid precision errors.
+The `send-tokens` package can be used as a library through the `sendTokens()`
+function.
 
-`sendTokens()` asynchronously resolves to a an object with a `tx` field, which
-is a transaction promise-object from the [flex-contract](https://github.com/cluracan/flex-contract#transaction-promises)
-library for the transfer. This extra layer of indirection is necessary to
-prevent implicit promise chaining with `await`.
+`sendTokens()` asynchronously resolves to a transaction receipt once the
+transaction has been mined (or confirmed, if the `confirmations` option is > 0).
 
 #### sendTokens() Examples
 
@@ -165,42 +161,59 @@ receipt = await tx.receipt;
 
 ```js
 const {sendTokens} = require('send-tokens');
-// Send AMOUNT_IN_WEI tokens to RECIPIENT via the token contract at
+// Send TOKEN_AMOUNT tokens to RECIPIENT via the token contract at
 // TOKEN_ADDRESS.
 {tx: Object} = async sendTokens(
   // Address of token contract.
+  // Should be a hex string ('0x...')
   TOKEN_ADDRESS: String,
   // Address of recipient.
+  // Should be a hex string ('0x...')
   RECIPIENT: String,
-  // Amount of tokens to send, in weis (1e-18).
-  // Should be either a hex-encoded or base-10 string.
-  AMOUNT_IN_WEI: String,
+  // Amount of tokens to send. Units depend on `base` option.
+  // Should be a base-10 string (e.g., '1234...').
+  TOKEN_AMOUNT: String,
   // Options object
   {
+    // Suppress output.
+    quiet: Boolean,
+    // If specified, append to a JSON log file at this path.
+    log: String,
+    // Decimal places of token amount.
+    // E.g., 18 for whole ether, 0 for wei or smallest units.
+    // Defaults to 0.
+    base: Number,
     // If connecting to a custom provider (e.g., a private node), this
     // can be the set to the address of an unlocked wallet on the provider
     // from which to send the tokens.
-    from: String,
+    account: String,
     // Hex-encoded 32-byte private key of sender (e.g., '0x1234...').
     key: String,
-    // BIP39 mnemonic phrase.
+    // BIP39 mnemonic phrase of sender.
     mnemonic: String,
-    // JSON-encoded keystore file contents.
+    // Sender's Mnemonic account index. Defaults to 0.
+    mnemonicIndex: Number,
+    // Sender's JSON-encoded keystore file contents.
     keystore: String,
-    // Keystore password (if `keystore` is passed).
+    // Sender's keystore file path.
+    keystoreFile: String,
+    // Keystore password.
     password: String,
     // Ethereum network to use. May be 'main', 'ropsten', 'rinkeby', or 'kovan'.
     // Defaults to 'main',
     network: String,
-    // Gas price for the transaction. Should be a hex-encoded or base-10 number
-    // string in weis (1e-18).
-    gasPrice: String,
+    // Gas price for the transaction.
+    // Should be a number in gweis.
+    // Defaults to current network gas price.
+    gasPrice: Number,
+    // Number of confirmations to wait for after the transaction is mined.
+    // Maximum of 12. Defaults to 0 (no confirmations).
+    confirmations: Number,
     // Infura API key to use.
     infuraKey: String,
-    // Custom provider URI (e.g., http://localhost:8545)
-    providerURI: String,
-    // Custom provider object.
-    provider: Object,
+    // Custom provider. May either be a URI (e.g., http://localhost:8545) or
+    // a Provider object from Web3.
+    provider: String | Object,
     // Custom web3 object.
     web3: Object
   });
@@ -208,7 +221,7 @@ const {sendTokens} = require('send-tokens');
 
 #### toWallet()
 Another exposed library function is `toWallet()`, which returns an address
-and private key pair from a private key, mnemonic, or keystore. Below are the
+& private key pair from a private key, mnemonic, or keystore. Below are the
 full options.
 
 ```js
@@ -220,6 +233,8 @@ const {toWallet} = require('send-tokens');
     key: String,
     // BIP39 mnemonic phrase.
     mnemonic: String,
+    // Mnemonic account index. Defaults to 0.
+    mnemonicIndex: Number,
     // JSON-encoded keystore file contents.
     keystore: String,
     // Keystore password (if `keystore` is passed).

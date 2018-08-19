@@ -44,15 +44,14 @@ describe('flex-contract', function() {
 		const amount = _.random(1, 1000);
 		const to = randomAccount();
 		await assert.rejects(lib.sendTokens(token.address, to.address, amount,
-				{from: accounts[1].address, provider: provider}));
+				{from: accounts[1].address, provider: provider, quiet: true}));
 	});
 
 	it('can transfer tokens via default account', async function() {
 		const amount = _.random(1, 1000);
 		const to = randomAccount();
-		const {tx} = await lib.sendTokens(token.address, to.address, amount,
-			{provider: provider});
-		const receipt = await tx;
+		const receipt = await lib.sendTokens(token.address, to.address, amount,
+			{provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -60,9 +59,8 @@ describe('flex-contract', function() {
 	it('can transfer tokens via private key', async function() {
 		const amount = _.random(1, 1000);
 		const to = randomAccount();
-		const {tx} = await lib.sendTokens(token.address, to.address, amount,
-			{key: accounts[0].key, provider: provider});
-		const receipt = await tx;
+		const receipt = await lib.sendTokens(token.address, to.address, amount,
+			{key: accounts[0].key, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -72,9 +70,8 @@ describe('flex-contract', function() {
 		const to = randomAccount();
 		const PW = crypto.randomBytes(8).toString('hex');
 		const keystore = createKeystore(accounts[0], PW);
-		const {tx} = await lib.sendTokens(token.address, to.address, amount,
-			{keystore: keystore, password: PW, provider: provider});
-		const receipt = await tx;
+		const receipt = await lib.sendTokens(token.address, to.address, amount,
+			{keystore: keystore, password: PW, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
 	});
@@ -85,11 +82,19 @@ describe('flex-contract', function() {
 		const to = randomAccount();
 		const from = fromMnemonic(mnemonic);
 		await fundAccount(from.address, token);
-		const {tx} = await lib.sendTokens(token.address, to.address, amount,
-			{mnemonic: mnemonic, provider: provider});
-		const receipt = await tx;
+		const receipt = await lib.sendTokens(token.address, to.address, amount,
+			{mnemonic: mnemonic, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address), _.toString(amount));
+	});
+
+	it('can transfer tokens via with different base', async function() {
+		const to = randomAccount();
+		const receipt = await lib.sendTokens(token.address, to.address, 1,
+			{provider: provider, base: 18, quiet: true});
+		assert.ok(receipt.transactionHash);
+		assert.equal(await token.balanceOf(to.address),
+			_.toString(new BigNumber('1e18').toString(10)));
 	});
 });
 
