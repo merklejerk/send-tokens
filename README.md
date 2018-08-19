@@ -118,8 +118,10 @@ must be fully registered with the ENS contract and a resolver.
 The `send-tokens` package can be used as a library through the `sendTokens()`
 function.
 
-`sendTokens()` asynchronously resolves to a transaction receipt once the
-transaction has been mined (or confirmed, if the `confirmations` option is > 0).
+`sendTokens()` asynchronously resolves to a
+[transaction receipt](https://web3js.readthedocs.io/en/1.0/web3-eth.html#eth-gettransactionreceipt-return)
+once the transaction has been mined (or confirmed, if the
+`confirmations` option is > 0).
 
 #### sendTokens() Examples
 
@@ -132,29 +134,30 @@ const RECIPIENT = '0x0420DC92A955e3e139b52142f32Bd54C6D46c023';
 
 // Sending wallet's private key.
 const PRIVATE_KEY = '0x52c251b9e04740157471a724e9a3210b83fac5834b29c89d5bd57661bd2a7057';
-// Try to send 100 wei (1e-18) of tokens to someone using a private key.
-const {tx} = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
+// Send 100 wei (1e-18) of tokens to someone using a private key and wait for
+// it to be mined.
+let receipt = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
   {key: PRIVATE_KEY});
-// Wait for 3 confirmations after the transaction is mined and get the receipt.
-let receipt = await tx.confirmed(3);
 
 // Sending wallet's mnemonic.
 const MNEMONIC = 'butter crepes sugar flour eggs milk ...';
-// Try to send 100 wei (1e-18) of tokens to someone using a (BIP39) mnemonic phrase.
-{tx} = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
-  {mnemonic: MNEMONIC});
-// Just wait for the transaction hash.
-let txId = await tx.txId(3);
+// Send 100 wei (1e-18) of tokens to someone using a (BIP39) mnemonic phrase
+// and wait for it to be mined and confirmed 3 times.
+receipt = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
+  {mnemonic: MNEMONIC, confirmations: 3});
 
 // Sending wallet's keystore file contents as a string.
 const KEYSTORE = '{...}';
 // Keystore password.
 const PASSWORD = 'secret';
-// Try to send 100 wei (1e-18) of tokens to someone using a keystore file.
-{tx} = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
-  {keystore: KEYSTORE, password: PASSWORD});
-// Wait for the transaction to be mined and get the receipt.
-receipt = await tx.receipt;
+// Send 1 ether (1e18) of tokens to someone using a keystore file,
+// print the transaction ID when it's available, and wait for it to be mined.
+receipt = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '1', {
+    keystore: KEYSTORE,
+    password: PASSWORD,
+    base: 18,
+    onTxId: console.log
+  });
 ```
 
 #### Full sendTokens() Options
@@ -179,6 +182,10 @@ const {sendTokens} = require('send-tokens');
     quiet: Boolean,
     // If specified, append to a JSON log file at this path.
     log: String,
+    // Call this function, passing the transaction hash/ID of the transaction
+    // once it becomes available (transaction is posted to the blockchain but
+    // not yet mined).
+    onTxId: Function,
     // Decimal places of token amount.
     // E.g., 18 for whole ether, 0 for wei or smallest units.
     // Defaults to 0.

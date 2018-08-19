@@ -59,6 +59,8 @@ async function sendTokens(token, to, amount, opts={}) {
 
 	const {tx} = await transfer(token, to, amount, txOpts);
 	const txId = await tx.txId;
+	if (_.isFunction(opts.onTxId))
+		opts.onTxId(txId);
 
 	say(`Waiting for transaction ${txId.green.bold} to be mined...`);
 
