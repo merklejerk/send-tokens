@@ -11,21 +11,17 @@ const ERC20_ABI = require('./erc20.abi.json');
 
 module.exports = {
 	sendTokens: sendTokens,
-	getWallet: getWallet
+	toWallet: toWallet
 };
 
-async function getWallet(opts, eth=null) {
-	eth = eth || new FlexEther(opts);
+function toWallet(opts, eth=null) {
 	let from = null;
 	let key = null;
-	if (opts.from)
-		from = opts.from
-	else if (opts.mnemonic || opts.key || opts.keystore) {
+	if (opts.mnemonic || opts.key || opts.keystore) {
 		key = getPrivateKey(opts);
 		if (key)
 			from = keyToAddress(key);
-	} else
-		from = await eth.getDefaultAccount();
+	}
 	return {
 		address: from,
 		key: key
@@ -41,13 +37,24 @@ async function sendTokens(token, to, amount, opts={}) {
 			web3: opts.web3,
 			net: require('net')
 		});
-	const wallet = await getWallet(opts, contract._eth);
-	if (!wallet.address)
+	let from = undefined;
+	let key = undefined;
+	if (!opts.mnemonic && !opts.key && !opts.keystore) {
+		if (opts.from)
+			from = opts.from;
+		else
+			from = await contract._eth.getDefaultAccount();
+	} else {
+		const w = toWallet(opts, contract._eth);
+		from = w.address;
+		key = w.key;
+	}
+	if (!from)
 		throw new Error('No account to send from.');
-	await verifyTokenBalance(contract, wallet.address, amount);
+	await verifyTokenBalance(contract, from, amount);
 	return {tx: contract.transfer(to, amount, {
-		from: wallet.key ? undefined : wallet.address,
-		key: wallet.key,
+		from: key ? undefined : from,
+		key: key,
 		gasPrice: opts.gasPrice
 	})};
 }
