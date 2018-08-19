@@ -10,37 +10,38 @@ const VERSION = require('../package.json').version;
 const lib = require('./lib');
 require('colors');
 
-process.on('unhandledRejection', console.error);
+if (require.main == module) {
+	process.on('unhandledRejection', console.error);
+	program
+		.version(VERSION, '-v, --version')
+		.arguments('<token> <to> <amount>')
+		.option('-b, --base <n>', `decimal places amount is expressed in (e.g, 0 for wei, 18 for ether)`, parseInt, 0)
+		.option('-k, --key <hex>', `sending wallet's private key`)
+		.option('-f, --key-file <file>', `sending wallet's private key file`)
+		.option('-s, --keystore <file> <password>', `sending wallet's keystore file`)
+		.option('-m, --mnemonic <phrase>', `sending wallet's HD wallet phrase`)
+		.option('--mnemonic-index <n>', `sending wallet's HD wallet account index`, parseInt, 0)
+		.option('-a, --account <hex>', `sending wallet's account address (provider wallet)`)
+		.option('-c, --confirmations <n>', `number of confirmations to wait for before returning`, parseInt, 0)
+		.option('-p, --provider <uri>', `provider URI`)
+		.option('-n, --network <name>', 'network name')
+		.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
+		.option('-l, --log <file>', `append a JSON log to a file`)
+		.action(async function (token, to, amount) {
+			try {
+				await run(opts, {token: token, to: to, amount: amount});
+				process.exit(0);
+			} catch (err) {
+				console.error(err.message);
+				process.exit(-1);
+			}
+		});
+	program.parse(process.argv);
+	if (process.argv.slice(2).length == 0)
+		program.outputHelp();
+}
 
-program
-	.version(VERSION, '-v, --version')
-	.arguments('<token> <to> <amount>')
-	.option('-b, --base <n>', `decimal places amount is expressed in (e.g, 0 for wei, 18 for ether)`, parseInt, 0)
-	.option('-k, --key <hex>', `sending wallet's private key`)
-	.option('-f, --key-file <file>', `sending wallet's private key file`)
-	.option('-s, --keystore <file> <password>', `sending wallet's keystore file`)
-	.option('-m, --mnemonic <phrase>', `sending wallet's HD wallet phrase`)
-	.option('--mnemonic-index <n>', `sending wallet's HD wallet account index`, parseInt, 0)
-	.option('-a, --account <hex>', `sending wallet's account address (provider wallet)`)
-	.option('-c, --confirmations <n>', `number of confirmations to wait for before returning`, parseInt, 0)
-	.option('-p, --provider <uri>', `provider URI`)
-	.option('-n, --network <name>', 'network name')
-	.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
-	.option('-l, --log <file>', `append a JSON log to a file`)
-	.action(async function (token, to, amount) {
-		try {
-			await run(program, {token: token, to: to, amount: amount});
-			process.exit(0);
-		} catch (err) {
-			console.error(err.message);
-			process.exit(-1);
-		}
-	});
-program.parse(process.argv);
-if (process.argv.slice(2).length == 0)
-	program.outputHelp();
-
-async function run(program, args) {
+async function run(opts, args) {
 	for (let addr of [args.token, args.to]) {
 		if (!/^(\w+\.)*\w+\.(test|eth)$/.test(addr) && !ethjs.isValidAddress(addr))
 			throw new Error(`Invalid address: ${addr}`);
@@ -50,10 +51,10 @@ async function run(program, args) {
 
 	const token = ethjs.isValidAddress(args.to) ? ethjs.toChecksumAddress(args.token) : args.token;
 	const to = ethjs.isValidAddress(args.to) ? ethjs.toChecksumAddress(args.to) : args.to;
-	const amount = toWei(args.amount, program.base || 0);
-	const confirmations = program.confirmations || 0;
-	const opts = await createTransferOpts(program);
-	const wallet = await lib.getWallet(opts);
+	const amount = toWei(args.amount, opts.base || 0);
+	const confirmations = opts.confirmations || 0;
+	const opts = await createTransferOpts(opts);
+	const wallet = await lib.toWallet(opts);
 	const logId = createLogId({
 		time: _.now(),
 		token: token,
@@ -61,7 +62,7 @@ async function run(program, args) {
 		amount: amount,
 		from: wallet.address
 	});
-	const log = program.log ? createJSONLogger(logId, program.log) : _.noop;
+	const log = opts.log ? createJSONLogger(logId, opts.log) : _.noop;
 
 	console.log(`Token: ${token.green.bold}`);
 	console.log(`${wallet.address.blue.bold} -> ${amount.yellow.bold} -> ${to.blue.bold}`);
@@ -82,43 +83,41 @@ async function run(program, args) {
 		gas: receipt.gasUsed,
 		block: receipt.blockNumber,
 	});
-
-	process.exit(0);
 };
 
 function toWei(amount, base=0) {
 	return new BigNumber(amount).times(`1e${base}`).integerValue().toString(10);
 }
 
-async function createTransferOpts(program) {
-	const opts = {};
-	if (program.key) {
-		opts.key = ethjs.addHexPrefix(program.key);
-		if (!/^0x[a-f0-9]{64}$/i.test(opts.key))
+async function createTransferOpts(opts) {
+	const txOpts = {};
+	if (opts.key) {
+		txOpts.key = ethjs.addHexPrefix(opts.key);
+		if (!/^0x[a-f0-9]{64}$/i.test(txOpts.key))
 			throw new Error('Invalid private key.');
 	}
-	else if (program.keyFile)
-		opts.key = await fs.readFile(program.keyFile, 'utf-8');
-	else if (program.keystore) {
-		opts.keystore = await fs.readFile(program.keystore, 'utf-8');
-		opts.password = program.password;
+	else if (opts.keyFile)
+		txOpts.key = await fs.readFile(opts.keyFile, 'utf-8');
+	else if (opts.keystore) {
+		txOpts.keystore = await fs.readFile(opts.keystore, 'utf-8');
+		txOpts.password = opts.password;
 	}
-	else if (program.mnemonic) {
-		opts.mnemonicIndex = program.mnemonicIndex || 0;
-		opts.mnemonic = program.mnemonic.trim();
-	} else if (program.account)
-		opts.from = program.account;
+	else if (opts.mnemonic) {
+		txOpts.mnemonicIndex = opts.mnemonicIndex || 0;
+		txOpts.mnemonic = opts.mnemonic.trim();
+	} else if (opts.account)
+		txOpts.from = opts.account;
 
-	if (program.provider)
-		opts.providerURI = program.provider;
-	if (program.network)
-		opts.network = program.network;
+	if (opts.provider)
+		txOpts.providerURI = opts.provider;
+	if (opts.network)
+		txOpts.network = opts.network;
 
-	if (program.gasPrice) {
-		opts.gasPrice = new BigNumber('1e9').times(program.gasPrice)
+	if (opts.gasPrice) {
+		txOpts.gasPrice = new BigNumber('1e9').times(opts.gasPrice)
 			.integerValue().toString(10);
 	}
-	return opts;
+	return txOpts;
 }
 
 function createLogId(fields) {
@@ -141,3 +140,5 @@ function createJSONLogger(logId, file) {
 		fs.appendFileSync(file, `${line}\n`);
 	};
 }
+
+module.exports = {run: run};

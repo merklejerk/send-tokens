@@ -115,7 +115,7 @@ must be fully registered with the ENS contract and a resolver.
 
 
 ## Library Usage
-The `send-tokens` package can be used (as a slightly lower-level) library through
+The `send-tokens` package can be used as a (slightly lower-level) library through
 the `sendTokens()` function. As a library, input normalization and logging are
 the responsibility of the caller. Token amounts should be expressed as either
 hex-encoded (`0x...`) or base-10 **strings** to avoid precision errors.
@@ -172,7 +172,7 @@ const {sendTokens} = require('send-tokens');
   TOKEN_ADDRESS: String,
   // Address of recipient.
   RECIPIENT: String,
-  // Amount of tokens to send, in wei (1e-18).
+  // Amount of tokens to send, in weis (1e-18).
   // Should be either a hex-encoded or base-10 string.
   AMOUNT_IN_WEI: String,
   // Options object
@@ -192,6 +192,9 @@ const {sendTokens} = require('send-tokens');
     // Ethereum network to use. May be 'main', 'ropsten', 'rinkeby', or 'kovan'.
     // Defaults to 'main',
     network: String,
+    // Gas price for the transaction. Should be a hex-encoded or base-10 number
+    // string in weis (1e-18).
+    gasPrice: String,
     // Infura API key to use.
     infuraKey: String,
     // Custom provider URI (e.g., http://localhost:8545)
