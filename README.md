@@ -134,14 +134,14 @@ const RECIPIENT = '0x0420DC92A955e3e139b52142f32Bd54C6D46c023';
 
 // Sending wallet's private key.
 const PRIVATE_KEY = '0x52c251b9e04740157471a724e9a3210b83fac5834b29c89d5bd57661bd2a7057';
-// Send 100 wei (1e-18) of tokens to someone using a private key and wait for
+// Send 100 wei (100e-18) of tokens to someone using a private key and wait for
 // it to be mined.
 let receipt = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
   {key: PRIVATE_KEY});
 
 // Sending wallet's mnemonic.
 const MNEMONIC = 'butter crepes sugar flour eggs milk ...';
-// Send 100 wei (1e-18) of tokens to someone using a (BIP39) mnemonic phrase
+// Send 100 wei (100e-18) of tokens to someone using a (BIP39) mnemonic phrase
 // and wait for it to be mined and confirmed 3 times.
 receipt = await sendTokens(TOKEN_ADDRESS, RECIPIENT, '100',
   {mnemonic: MNEMONIC, confirmations: 3});
