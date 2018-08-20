@@ -1,5 +1,5 @@
-![build status](https://travis-ci.org/cluracan/send-tokens.svg?branch=master)
-![npm package](https://badge.fury.io/js/send-tokens.svg)
+[![build status](https://travis-ci.org/cluracan/send-tokens.svg?branch=master)](https://travis-ci.org/cluracan/send-tokens)
+[![npm package](https://badge.fury.io/js/send-tokens.svg)](https://www.npmjs.com/package/send-tokens)
 
 # send-tokens
 A simple CLI tool for sending Ethereum ERC20 tokens using any of the following:
