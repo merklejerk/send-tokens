@@ -36,7 +36,7 @@ PRIVATE_KEY='0x52c251b9e04740157471a724e9a3210b83fac5834b29c89d5bd57661bd2a7057'
 # Sending wallet's HD mnemonic.
 MNEMONIC='butter crepes sugar flour eggs milk ...'
 
-# Send 100 wei (100e-18) of tokens to and address,
+# Send 100 wei (100e-18) of tokens to an address,
 # on the mainnet, using a wallet's private key
 $ send-tokens --key $PRIVATE_KEY $TOKEN $DST 100
 
