@@ -9,6 +9,8 @@ const ethwallet = require('ethereumjs-wallet');
 const ethjshdwallet = require('ethereumjs-wallet/hdkey');
 const bip39 = require('bip39');
 const fs = require('mz/fs');
+const readline = require('readline');
+const process = require('process');
 const ERC20_ABI = require('./erc20.abi.json');
 
 module.exports = {
@@ -56,6 +58,10 @@ async function sendTokens(token, to, amount, opts={}) {
 
 	say(`Token: ${token.green.bold}`);
 	say(`${sender.blue.bold} -> ${amount.yellow.bold} -> ${to.blue.bold}`);
+	if (opts.confirm) {
+		if (!(await confirm()))
+			return;
+	}
 
 	const {tx} = await transfer(token, to, amount, txOpts);
 	const txId = await tx.txId;
@@ -76,6 +82,20 @@ async function sendTokens(token, to, amount, opts={}) {
 		block: receipt.blockNumber,
 	});
 	return receipt;
+}
+
+function confirm() {
+	const rl = readline.createInterface({
+		input: process.stdin,
+		output: process.stdout
+	});
+	return new Promise((accept, reject) => {
+		rl.question('Proceed? [y/N]', answer => {
+			answer = answer || 'n';
+			answer = answer.toLowerCase();
+			accept(answer == 'y' || answer == 'yes');
+		});
+	});
 }
 
 async function resolveSender(opts) {
@@ -201,7 +221,7 @@ function keyToAddress(key) {
 
 function getPrivateKey(opts) {
 	if (opts.key)
-		return opts.key;
+		return ethjs.addHexPrefix(opts.key);
 	if (opts.keystore)
 		return fromKeystore(opts.keystore, opts.password);
 	if (opts.mnemonic)

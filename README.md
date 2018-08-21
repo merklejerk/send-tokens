@@ -2,12 +2,15 @@
 [![npm package](https://badge.fury.io/js/send-tokens.svg)](https://www.npmjs.com/package/send-tokens)
 
 # send-tokens
-A simple CLI tool for sending Ethereum ERC20 tokens using any of the following:
+A simple CLI tool (and library) for sending Ethereum ERC20 tokens using any of the following:
 
 - A wallet's private key
 - A keystore file
 - An HD wallet mnemonic phrase
 - A provider (node) wallet address
+
+For the ether version of this package, check out
+[send-ether](https://github.com/cluracan/send-ether).
 
 ### Contents
 
@@ -73,6 +76,7 @@ Usage: send-tokens [options] <token> <to> <amount>
     -n, --network <name>              network name
     -G, --gas-price <gwei>            explicit gas price, in gwei (e.g., 20)
     -l, --log                         append a JSON resuly object to a log file on success
+    --confirm                         confirm before proceeding
     -h, --help                        output usage information
 ```
 

@@ -22,10 +22,11 @@ if (require.main == module) {
 		.option('-n, --network <name>', 'network name')
 		.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
 		.option('-l, --log <file>', `append a JSON log to a file`)
+		.option('--confirm', `confirm before proceeding`)
 		.action(async function (token, to, amount) {
 			try {
-				await sendTokens(token, to, amount, program);
-				process.exit(0);
+				const r = await sendTokens(token, to, amount, program);
+				process.exit(r ? 0 : -1);
 			} catch (err) {
 				console.error(err.message);
 				process.exit(-1);
