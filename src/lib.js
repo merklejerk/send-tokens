@@ -11,6 +11,9 @@ const bip39 = require('bip39');
 const fs = require('mz/fs');
 const readline = require('readline');
 const process = require('process');
+const prompt = require('prompt');
+prompt.message = '';
+prompt.delimiter = ':';
 const ERC20_ABI = require('./erc20.abi.json');
 
 module.exports = {
@@ -45,7 +48,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	amount = toWei(amount, opts.base || 0);
 	const confirmations = opts.confirmations || 0;
 	const txOpts = await createTransferOpts(opts);
-	const sender = await resolveSender(opts);
+	const sender = await resolveSender(txOpts);
 	const logId = createLogId({
 		time: _.now(),
 		token: token,
@@ -85,16 +88,14 @@ async function sendTokens(token, to, amount, opts={}) {
 }
 
 function confirm() {
-	const rl = readline.createInterface({
-		input: process.stdin,
-		output: process.stdout
-	});
 	return new Promise((accept, reject) => {
-		rl.question('Proceed? [y/N]', answer => {
-			answer = answer || 'n';
-			answer = answer.toLowerCase();
-			accept(answer == 'y' || answer == 'yes');
-		});
+		prompt.get({
+				description: 'Proceed? [y/N]',
+				name: 'answer',
+			}, (err, {answer}) => {
+				answer = (answer || 'n').toLowerCase();
+				accept(answer == 'y' || answer == 'yes');
+			});
 	});
 }
 
@@ -125,7 +126,7 @@ async function createTransferOpts(opts) {
 	else if (opts.keyFile)
 		txOpts.key = await fs.readFile(opts.keyFile, 'utf-8');
 	else if (opts.keystoreFile) {
-		txOpts.keystore = await fs.readFile(opts.keystore, 'utf-8');
+		txOpts.keystore = await fs.readFile(opts.keystoreFile, 'utf-8');
 		txOpts.password = opts.password;
 	}
 	else if (opts.keystore) {
@@ -153,7 +154,24 @@ async function createTransferOpts(opts) {
 		txOpts.gasPrice = new BigNumber('1e9').times(opts.gasPrice)
 			.integerValue().toString(10);
 	}
+	if (txOpts.keystore && !txOpts.password)
+		txOpts.password = await promptForPassword();
 	return txOpts;
+}
+
+function promptForPassword() {
+	return new Promise((accept, reject) => {
+		prompt.get({
+				description: 'Enter password',
+				name: 'pw',
+				hidden: true,
+				replace: '*'
+			}, (err, {pw}) => {
+				if (!pw)
+					return reject(pw);
+				accept(pw);
+			});
+	});
 }
 
 function createLogId(fields) {
