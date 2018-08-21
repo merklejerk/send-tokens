@@ -61,23 +61,25 @@ $ send-tokens --provider 'http://localhost:8545' --confirmations 3 $TOKEN $DST 1
 $ send-tokens --help
 Usage: send-tokens [options] <token> <to> <amount>
 
-  Options:
+Options:
 
-    -v, --version                     output the version number
-    -b, --base <n>                    decimal places amount is expressed in (e.g, 0 for wei, 18 for ether) (default: 0)
-    -k, --key <hex>                   sending wallet's private key
-    -f, --key-file <file>             sending wallet's private key file
-    -s, --keystore <file> <password>  sending wallet's keystore file
-    -m, --mnemonic <phrase>           sending wallet's HD wallet phrase
-    --mnemonic-index <n>              sending wallet's HD wallet account index (default: 0)
-    -a, --account <hex>               sending wallet's account address (provider wallet)
-    -c, --confirmations <n>           number of confirmations to wait for before returning (default: 0)
-    -p, --provider <uri>              provider URI
-    -n, --network <name>              network name
-    -G, --gas-price <gwei>            explicit gas price, in gwei (e.g., 20)
-    -l, --log                         append a JSON resuly object to a log file on success
-    --confirm                         confirm before proceeding
-    -h, --help                        output usage information
+  -v, --version               output the version number
+  -b, --base <n>              decimal places amount is expressed in (e.g, 0 for wei, 18 for ether) (default: 0)
+  -k, --key <hex>             sending wallet's private key
+  -f, --key-file <file>       sending wallet's private key file
+  -s, --keystore-file <file>  sending wallet's keystore file
+  --password <password        keystore file password
+  -m, --mnemonic <phrase>     sending wallet's HD wallet phrase
+  --mnemonic-index <n>        sending wallet's HD wallet account index (default: 0)
+  -a, --account <hex>         sending wallet's account address (provider wallet)
+  -c, --confirmations <n>     number of confirmations to wait for before returning (default: 0)
+  -p, --provider <uri>        provider URI
+  -n, --network <name>        network name
+  -G, --gas-price <gwei>      explicit gas price, in gwei (e.g., 20)
+  -l, --log <file>            append a JSON log to a file
+  --confirm                   confirm before proceeding
+  -h, --help                  output usage information
+
 ```
 
 ## JSON Logs
