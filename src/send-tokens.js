@@ -23,11 +23,10 @@ program
 	.option('-n, --network <name>', 'network name')
 	.option('-G, --gas-price <gwei>', `explicit gas price, in gwei (e.g., 20)`, parseFloat)
 	.option('-l, --log <file>', `append a JSON log to a file`)
-	.option('--no-confirm', `bypass confirmation`)
+	.option('--no-confirm', `bypass input confirmation`)
 	.action(async function (token, to, amount) {
 		try {
-			const opts = _.assign({}, this, {confirm: !this.noConfirm});
-			const r = await sendTokens(token, to, amount, opts);
+			const r = await sendTokens(token, to, amount, this);
 			process.exit(r ? 0 : -1);
 		} catch (err) {
 			console.error(err.message);
