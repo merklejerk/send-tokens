@@ -38,6 +38,22 @@
 		"type": "function"
 	},
 	{
+		"name": "decimals",
+		"constant": true,
+		"stateMutability": "view",
+		"inputs": [
+
+		],
+		"outputs": [
+			{
+				"name": "",
+				"type": "uint8"
+			}
+		],
+		"payable": false,
+		"type": "function"
+	},
+	{
 		"name": "transferFrom",
 		"constant": false,
 		"inputs": [

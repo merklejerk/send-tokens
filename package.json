@@ -1,6 +1,6 @@
 {
 	"name": "send-tokens",
-	"version": "1.7.1",
+	"version": "2.0.0",
 	"description": "Simple CLI tool (and library) to send ERC20 tokens with a private key, mnemonic, or keystore.",
 	"main": "src/lib.js",
 	"repository": {

@@ -40,15 +40,20 @@ async function sendTokens(token, to, amount, opts={}) {
 		if (!/^(\w+\.)*\w+\.(test|eth)$/.test(addr) && !ethjs.isValidAddress(addr))
 			throw new Error(`Invalid address: ${addr}`);
 	}
-	if (!/^\d+(\.\d+)?$/.test(amount))
+	if (!_.isNumber(amount) && !/^\d+(\.\d+)?$/.test(amount))
 		throw new Error(`Invalid amount: ${amount}`);
+	if (_.isNumber(opts.decimals) && opts.decimals < 0)
+		throw new Error(`Invalid decimals: ${opts.decimals}`);
 
 	token = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(token) : token;
 	to = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(to) : to;
-	amount = toWei(amount, opts.base || 0);
 	const confirmations = opts.confirmations || 0;
 	const txOpts = await createTransferOpts(opts);
-	const sender = await resolveSender(txOpts);
+	const contract = createFlexContract(token, opts);
+	const sender = await resolveSender(contract._eth, txOpts);
+	const tokenDecimals = await resolveDecimals(contract)
+	const inputDecimals = _.isNumber(opts.decimals) ? opts.decimals : tokenDecimals;
+	amount = toWei(amount, inputDecimals);
 	const logId = createLogId({
 		time: _.now(),
 		token: token,
@@ -59,20 +64,18 @@ async function sendTokens(token, to, amount, opts={}) {
 	const writeLog = opts.log ? createJSONLogger(logId, opts.log) : _.noop;
 	const say = opts.quiet ? _.noop : console.log;
 
-	say(`Token: ${token.green.bold}`);
-	say(`${sender.blue.bold} -> ${amount.yellow.bold} -> ${to.blue.bold}`);
+	say(`Token: ${token.green.bold} (${tokenDecimals} decimal places)`);
+	say(`${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} -> ${to.blue.bold}`);
 	if (opts.confirm) {
 		if (!(await confirm()))
 			return;
 	}
 
-	const {tx} = await transfer(token, to, amount, txOpts);
+	const {tx} = await transfer(contract, to, amount, txOpts);
 	const txId = await tx.txId;
 	if (_.isFunction(opts.onTxId))
 		opts.onTxId(txId);
-
 	say(`Waiting for transaction ${txId.green.bold} to be mined...`);
-
 	const receipt = await tx.confirmed(confirmations);
 
 	writeLog({
@@ -99,21 +102,27 @@ function confirm() {
 	});
 }
 
-async function resolveSender(opts) {
+async function resolveSender(eth, opts) {
 	const w = toWallet(opts);
 	if (w && w.address)
 		return w.address;
-	const eth = new FlexEther({
-		provider: _.isObject(opts.provider) ? opts.provider : undefined,
-		providerURI: _.isString(opts.provider) ? opts.provider : undefined,
-		web3: opts.web3,
-		providerURI: opts.providerURI
-	});
 	return eth.getDefaultAccount();
 }
 
-function toWei(amount, base=0) {
-	return new BigNumber(amount).times(`1e${base}`).integerValue().toString(10);
+async function resolveDecimals(contract) {
+	try {
+		return _.toNumber(await contract.decimals());
+	} catch (err) {
+		return 0;
+	}
+}
+
+function toDecimal(amount, decimals) {
+	return new BigNumber(amount).div(`1e${decimals}`).toString(10);
+}
+
+function toWei(amount, decimals) {
+	return new BigNumber(amount).times(`1e${decimals}`).integerValue().toString(10);
 }
 
 async function createTransferOpts(opts) {
@@ -195,15 +204,18 @@ function createJSONLogger(logId, file) {
 	};
 }
 
-async function transfer(token, to, amount, opts={}) {
-	const contract = new FlexContract(ERC20_ABI, token, {
-			provider: opts.provider,
-			providerURI: opts.providerURI,
-			network: opts.network,
-			infuraKey: opts.infuraKey,
-			web3: opts.web3,
-			net: require('net')
-		});
+function createFlexContract(token, opts) {
+	return new FlexContract(ERC20_ABI, token, {
+		provider: opts.provider,
+		providerURI: opts.providerURI,
+		network: opts.network,
+		infuraKey: opts.infuraKey,
+		web3: opts.web3,
+		net: require('net')
+	});
+}
+
+async function transfer(contract, to, amount, opts={}) {
 	let from = undefined;
 	let key = undefined;
 	if (!opts.mnemonic && !opts.key && !opts.keystore) {
