@@ -4,8 +4,8 @@ const FlexContract = require('flex-contract');
 const FlexEther = require('flex-ether');
 const ABI = require('./contracts/token.json');
 const BigNumber = require('bignumber.js');
-const STARTING_TOKENS = new BigNumber('1e18').times(100).toString(10);
-const STARTING_ETHER = new BigNumber('1e18').times(100).toString(10);
+const STARTING_TOKENS = new BigNumber('1e18').times(1e6).toString(10);
+const STARTING_ETHER = new BigNumber('1e18').times(1e6).toString(10);
 const lib = require('../');
 const ethjs = require('ethereumjs-util');
 const ethjshdwallet = require('ethereumjs-wallet/hdkey');
@@ -41,43 +41,43 @@ describe('flex-contract', function() {
 	});
 
 	it('fails if insufficient balance', async function() {
-		const amount = _.random(1, 1000);
+		const amount = _.random(1, 10, true);
 		const to = randomAccount();
 		await assert.rejects(lib.sendTokens(token.address, to.address, amount,
 				{from: accounts[1].address, provider: provider, quiet: true}));
 	});
 
 	it('can transfer tokens via default account', async function() {
-		const amount = _.random(1, 1000);
+		const amount = _.random(1, 10, true);
 		const to = randomAccount();
 		const receipt = await lib.sendTokens(token.address, to.address, amount,
 			{provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
-		assert.equal(await token.balanceOf(to.address), _.toString(amount));
+		assert.equal(await token.balanceOf(to.address), toWei(amount));
 	});
 
 	it('can transfer tokens via private key', async function() {
-		const amount = _.random(1, 1000);
+		const amount = _.random(1, 10, true);
 		const to = randomAccount();
 		const receipt = await lib.sendTokens(token.address, to.address, amount,
 			{key: accounts[0].key, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
-		assert.equal(await token.balanceOf(to.address), _.toString(amount));
+		assert.equal(await token.balanceOf(to.address), toWei(amount));
 	});
 
 	it('can transfer tokens via keystore', async function() {
-		const amount = _.random(1, 1000);
+		const amount = _.random(1, 10, true);
 		const to = randomAccount();
 		const PW = crypto.randomBytes(8).toString('hex');
 		const keystore = createKeystore(accounts[0], PW);
 		const receipt = await lib.sendTokens(token.address, to.address, amount,
 			{keystore: keystore, password: PW, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
-		assert.equal(await token.balanceOf(to.address), _.toString(amount));
+		assert.equal(await token.balanceOf(to.address), toWei(amount));
 	});
 
 	it('can transfer tokens via mnemonic', async function() {
-		const amount = _.random(1, 1000);
+		const amount = _.random(1, 10, true);
 		const mnemonic = 'shantay you stay';
 		const to = randomAccount();
 		const from = fromMnemonic(mnemonic);
@@ -85,18 +85,22 @@ describe('flex-contract', function() {
 		const receipt = await lib.sendTokens(token.address, to.address, amount,
 			{mnemonic: mnemonic, provider: provider, quiet: true});
 		assert.ok(receipt.transactionHash);
-		assert.equal(await token.balanceOf(to.address), _.toString(amount));
+		assert.equal(await token.balanceOf(to.address), toWei(amount));
 	});
 
-	it('can transfer tokens via with different base', async function() {
+	it('can transfer tokens via with different units', async function() {
 		const to = randomAccount();
 		const receipt = await lib.sendTokens(token.address, to.address, 1,
-			{provider: provider, base: 18, quiet: true});
+			{provider: provider, decimals: 9, quiet: true});
 		assert.ok(receipt.transactionHash);
 		assert.equal(await token.balanceOf(to.address),
-			_.toString(new BigNumber('1e18').toString(10)));
+			_.toString(new BigNumber('1e9').toString(10)));
 	});
 });
+
+function toWei(amount, base=18) {
+	return new BigNumber(amount).times(`1e${base}`).toString(10);
+}
 
 function randomAccount() {
 	const key = crypto.randomBytes(32);
