@@ -42,8 +42,8 @@ async function sendTokens(token, to, amount, opts={}) {
 	}
 	if (!_.isNumber(amount) && !/^\d+(\.\d+)?$/.test(amount))
 		throw new Error(`Invalid amount: ${amount}`);
-	if (_.isNumber(opts.decimals) && opts.decimals < 0)
-		throw new Error(`Invalid decimals: ${opts.decimals}`);
+	if (!_.isNil(opts.decimals) && !_.inRange(opts.decimals, 0, 256))
+			throw new Error(`Invalid decimals: ${opts.decimals}`);
 
 	token = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(token) : token;
 	to = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(to) : to;
@@ -54,6 +54,10 @@ async function sendTokens(token, to, amount, opts={}) {
 	const tokenDecimals = await resolveDecimals(contract)
 	const inputDecimals = _.isNumber(opts.decimals) ? opts.decimals : tokenDecimals;
 	amount = toWei(amount, inputDecimals);
+
+	if (!sender)
+		throw new Error('Cannot determine sender.');
+
 	const logId = createLogId({
 		time: _.now(),
 		token: token,

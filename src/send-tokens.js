@@ -29,7 +29,7 @@ program
 			const r = await sendTokens(token, to, amount, this);
 			process.exit(r ? 0 : -1);
 		} catch (err) {
-			console.error(err.message);
+			console.error(err);
 			process.exit(-1);
 		}
 	});
