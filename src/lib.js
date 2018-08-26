@@ -42,7 +42,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	}
 	if (!_.isNumber(amount) && !/^\d+(\.\d+)?$/.test(amount))
 		throw new Error(`Invalid amount: ${amount}`);
-	if (_.isNumber(opts.decimals) && opts.decimals < 0)
+	if (!/^\d+$/.test(opts.decimals))
 		throw new Error(`Invalid decimals: ${opts.decimals}`);
 
 	token = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(token) : token;
@@ -65,7 +65,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	const say = opts.quiet ? _.noop : console.log;
 
 	say(`Token: ${token.green.bold} (${tokenDecimals} decimal places)`);
-	say(`${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} -> ${to.blue.bold}`);
+	say(`from ${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} tokens -> to ${to.blue.bold}`);
 	if (opts.confirm) {
 		if (!(await confirm()))
 			return;
