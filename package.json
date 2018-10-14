@@ -1,16 +1,16 @@
 {
 	"name": "send-tokens",
-	"version": "2.0.2",
+	"version": "2.0.3",
 	"description": "Simple CLI tool (and library) to send ERC20 tokens with a private key, mnemonic, or keystore.",
 	"main": "src/lib.js",
 	"repository": {
 		"type": "git",
-		"url": "https://github.com/cluracan/send-tokens.git"
+		"url": "https://github.com/merklejerk/send-tokens.git"
 	},
 	"bugs": {
-		"url": "https://github.com/cluracan/send-tokens/issues"
+		"url": "https://github.com/merklejerk/send-tokens/issues"
 	},
-	"author": "Lawrence Forman <not.larry@klv.io>",
+	"author": "Lawrence Forman <me@merklejerk.com>",
 	"license": "Apache-2.0",
 	"scripts": {
 		"start": "node src/send-tokens.js",
