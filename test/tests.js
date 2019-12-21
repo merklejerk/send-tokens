@@ -18,6 +18,7 @@ const assert = require('assert');
 describe('send-tokens', function() {
 	let _ganache = null;
 	let provider = null;
+	let eth = null;
 	let accounts = null;
 	let token = null;
 
@@ -32,10 +33,11 @@ describe('send-tokens', function() {
 		// Suppress max listener warnings.
 		provider.setMaxListeners(4096);
 		provider.engine.setMaxListeners(4096);
+		eth = new FlexEther({ provider })
 	});
 
 	beforeEach(async function() {
-		token = new FlexContract(ABI, {provider: provider});
+		token = new FlexContract(ABI, { eth });
 		await token.new();
 		await token.mint(accounts[0].address, STARTING_TOKENS);
 	});
