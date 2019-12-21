@@ -49,7 +49,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	to = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(to) : to;
 	const confirmations = opts.confirmations || 0;
 	const txOpts = await createTransferOpts(opts);
-	const contract = createFlexContract(token, opts);
+	const contract = createFlexContract(token, txOpts);
 	const sender = await resolveSender(contract._eth, txOpts);
 	const tokenDecimals = await resolveDecimals(contract);
 	const tokenSymbol = await resolveSymbol(contract);
@@ -70,7 +70,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	const say = opts.quiet ? _.noop : console.log;
 
 	say(`Token: ${tokenSymbol.bold} @ ${token.green.bold} (${tokenDecimals} decimal places)`);
-	say(`${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} -> ${to.blue.bold}`);
+	say(`${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} ${tokenSymbol} -> ${to.blue.bold}`);
 	if (opts.confirm) {
 		if (!(await confirm()))
 			return;
@@ -150,29 +150,45 @@ async function createTransferOpts(opts) {
 		txOpts.key = ethjs.addHexPrefix(opts.key);
 		if (!/^0x[a-f0-9]{64}$/i.test(txOpts.key))
 			throw new Error('Invalid private key.');
-	}
-	else if (opts.keyFile)
+	} else if (opts.keyFile) {
 		txOpts.key = await fs.readFile(opts.keyFile, 'utf-8');
-	else if (opts.keystoreFile) {
+	} else if (opts.keystoreFile) {
 		txOpts.keystore = await fs.readFile(opts.keystoreFile, 'utf-8');
 		txOpts.password = opts.password;
-	}
-	else if (opts.keystore) {
+	} else if (opts.keystore) {
 		txOpts.keystore = opts.keystore;
 		txOpts.password = opts.password;
-	}
-	else if (opts.mnemonic) {
+	} else if (opts.mnemonic) {
 		txOpts.mnemonicIndex = opts.mnemonicIndex || 0;
 		txOpts.mnemonic = opts.mnemonic.trim();
-	} else if (opts.account)
+	} else if (opts.account) {
 		txOpts.from = opts.account;
-	else if (opts.from)
+	} else if (opts.from) {
 		txOpts.from = opts.from;
+	}
+
+	if (opts.provider) {
+		if (_.isString(opts.provider)) {
+			txOpts.providerURI = opts.provider;
+		}
+		else {
+			txOpts.provider = opts.provider;
+		}
+	} else if (opts.providerURI) {
+		txOpts.providerURI = opts.providerURI;
+	}
+
+	if (opts.network) {
+		txOpts.network = opts.network;
+	}
 
 	if (opts.gasPrice) {
-		txOpts.gasPrice = new BigNumber('1e9').times(opts.gasPrice)
-			.integerValue().toString(10);
+		txOpts.gasPrice = new BigNumber('1e9')
+			.times(opts.gasPrice)
+			.integerValue()
+			.toString(10);
 	}
+
 	if (txOpts.keystore && !txOpts.password)
 		txOpts.password = await promptForPassword();
 	return txOpts;
@@ -219,9 +235,8 @@ function createFlexContract(token, opts) {
 		ERC20_ABI,
 		token,
 		{
-			providerURI: opts.providerURI ||
-				_.isString(opts.provider) ? opts.provider : undefined,
-			provider: _.isString(opts.provider) ? undefined : opts.provider,
+			providerURI: opts.providerURI,
+			provider: opts.provider,
 			network: opts.network,
 			infuraKey: opts.infuraKey,
 			eth: opts.eth,
