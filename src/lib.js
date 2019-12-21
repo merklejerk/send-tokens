@@ -132,7 +132,6 @@ async function resolveSymbol(contract) {
 	try {
 		return await contract.symbol();
 	} catch (err) {
-		console.error(err);
 		return '???';
 	}
 }
@@ -169,15 +168,6 @@ async function createTransferOpts(opts) {
 		txOpts.from = opts.account;
 	else if (opts.from)
 		txOpts.from = opts.from;
-
-	if (opts.provider) {
-		if (_.isString(opts.provider))
-			txOpts.providerURI = opts.provider;
-		else
-			txOpts.provider = opts.provider;
-	}
-	if (opts.network)
-		txOpts.network = opts.network;
 
 	if (opts.gasPrice) {
 		txOpts.gasPrice = new BigNumber('1e9').times(opts.gasPrice)

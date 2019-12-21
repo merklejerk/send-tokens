@@ -15,7 +15,7 @@ const crypto = require('crypto');
 const ganache = require('ganache-cli');
 const assert = require('assert');
 
-describe('flex-contract', function() {
+describe('send-tokens', function() {
 	let _ganache = null;
 	let provider = null;
 	let accounts = null;

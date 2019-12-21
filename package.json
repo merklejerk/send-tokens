@@ -1,6 +1,6 @@
 {
 	"name": "send-tokens",
-	"version": "2.2.0",
+	"version": "2.2.1",
 	"description": "Simple CLI tool (and library) to send ERC20 tokens with a private key, mnemonic, or keystore.",
 	"main": "src/lib.js",
 	"repository": {
@@ -14,7 +14,7 @@
 	"license": "Apache-2.0",
 	"scripts": {
 		"start": "node src/send-tokens.js",
-		"test": "mocha --timeout 10000 ./test/*.js"
+		"test": "mocha --timeout 30000 ./test/*.js"
 	},
 	"bin": {
 		"send-tokens": "./src/send-tokens.js"
