@@ -43,7 +43,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	if (!_.isNumber(amount) && !/^\d+(\.\d+)?$/.test(amount))
 		throw new Error(`Invalid amount: ${amount}`);
 	if (!_.isNil(opts.decimals) && !_.inRange(opts.decimals, 0, 256))
-			throw new Error(`Invalid decimals: ${opts.decimals}`);
+		throw new Error(`Invalid decimals: ${opts.decimals}`);
 
 	token = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(token) : token;
 	to = ethjs.isValidAddress(to) ? ethjs.toChecksumAddress(to) : to;
@@ -51,7 +51,8 @@ async function sendTokens(token, to, amount, opts={}) {
 	const txOpts = await createTransferOpts(opts);
 	const contract = createFlexContract(token, opts);
 	const sender = await resolveSender(contract._eth, txOpts);
-	const tokenDecimals = await resolveDecimals(contract)
+	const tokenDecimals = await resolveDecimals(contract);
+	const tokenSymbol = await resolveSymbol(contract);
 	const inputDecimals = _.isNumber(opts.decimals) ? opts.decimals : tokenDecimals;
 	amount = toWei(amount, inputDecimals);
 
@@ -68,7 +69,7 @@ async function sendTokens(token, to, amount, opts={}) {
 	const writeLog = opts.log ? createJSONLogger(logId, opts.log) : _.noop;
 	const say = opts.quiet ? _.noop : console.log;
 
-	say(`Token: ${token.green.bold} (${tokenDecimals} decimal places)`);
+	say(`Token: ${tokenSymbol.bold} @ ${token.green.bold} (${tokenDecimals} decimal places)`);
 	say(`${sender.blue.bold} -> ${toDecimal(amount, tokenDecimals).yellow.bold} -> ${to.blue.bold}`);
 	if (opts.confirm) {
 		if (!(await confirm()))
@@ -81,6 +82,12 @@ async function sendTokens(token, to, amount, opts={}) {
 		opts.onTxId(txId);
 	say(`Waiting for transaction ${txId.green.bold} to be mined...`);
 	const receipt = await tx.confirmed(confirmations);
+	const transferEvent = receipt.events.find(e => e.name === 'Transfer');
+	if (!transferEvent) {
+		console.warning(`No ERC20 'Transfer' event raised! Verify transfer manually.`);
+	} else {
+		say(`Successfully transferred ${toDecimal(transferEvent.args[2], tokenDecimals).yellow.bold} ${tokenSymbol}!`);
+	}
 
 	writeLog({
 		from: sender,
@@ -117,7 +124,16 @@ async function resolveDecimals(contract) {
 	try {
 		return _.toNumber(await contract.decimals());
 	} catch (err) {
-		return 0;
+		return 18;
+	}
+}
+
+async function resolveSymbol(contract) {
+	try {
+		return await contract.symbol();
+	} catch (err) {
+		console.error(err);
+		return '???';
 	}
 }
 
@@ -209,14 +225,19 @@ function createJSONLogger(logId, file) {
 }
 
 function createFlexContract(token, opts) {
-	return new FlexContract(ERC20_ABI, token, {
-		provider: opts.provider,
-		providerURI: opts.providerURI,
-		network: opts.network,
-		infuraKey: opts.infuraKey,
-		web3: opts.web3,
-		net: require('net')
-	});
+	return new FlexContract(
+		ERC20_ABI,
+		token,
+		{
+			providerURI: opts.providerURI ||
+				_.isString(opts.provider) ? opts.provider : undefined,
+			provider: _.isString(opts.provider) ? undefined : opts.provider,
+			network: opts.network,
+			infuraKey: opts.infuraKey,
+			eth: opts.eth,
+			net: require('net'),
+		},
+	);
 }
 
 async function transfer(contract, to, amount, opts={}) {
@@ -235,11 +256,17 @@ async function transfer(contract, to, amount, opts={}) {
 	if (!from)
 		throw new Error('No account to send from.');
 	await verifyTokenBalance(contract, from, amount);
-	return {tx: contract.transfer(to, amount, {
-		from: key ? undefined : from,
-		key: key,
-		gasPrice: opts.gasPrice
-	})};
+	return {
+		tx: contract.transfer(
+			to,
+			amount,
+			{
+				from: key ? undefined : from,
+				key: key,
+				gasPrice: opts.gasPrice
+			},
+		),
+	};
 }
 
 async function verifyTokenBalance(contract, from, amount) {
@@ -272,7 +299,7 @@ function fromKeystore(keystore, pw) {
 }
 
 function fromMnemonic(mnemonic, idx=0) {
-	const seed = bip39.mnemonicToSeed(mnemonic.trim());
+	const seed = bip39.mnemonicToSeedSync(mnemonic.trim());
 	const path = `m/44'/60'/0'/0/${idx}`;
 	const node = ethjshdwallet.fromMasterSeed(seed).derivePath(path);
 	const wallet = node.getWallet();

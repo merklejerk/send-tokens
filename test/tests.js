@@ -118,7 +118,7 @@ function createKeystore(acct, pw) {
 }
 
 function fromMnemonic(mnemonic, idx=0) {
-	const seed = bip39.mnemonicToSeed(mnemonic.trim());
+	const seed = bip39.mnemonicToSeedSync(mnemonic.trim());
 	const path = `m/44'/60'/0'/0/${idx}`;
 	const node = ethjshdwallet.fromMasterSeed(seed).derivePath(path);
 	const wallet = node.getWallet();
@@ -129,7 +129,6 @@ function fromMnemonic(mnemonic, idx=0) {
 }
 
 async function fundAccount(address, token) {
-	const eth = new FlexEther({provider: token.web3.currentProvider});
-	await eth.transfer(address, new BigNumber('1e18').toString(10));
+	await token.eth.transfer(address, new BigNumber('1e18').toString(10));
 	await token.mint(address, STARTING_TOKENS);
 }

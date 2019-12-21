@@ -1,6 +1,6 @@
 {
 	"name": "send-tokens",
-	"version": "2.1.1",
+	"version": "2.2.0",
 	"description": "Simple CLI tool (and library) to send ERC20 tokens with a private key, mnemonic, or keystore.",
 	"main": "src/lib.js",
 	"repository": {
@@ -20,15 +20,15 @@
 		"send-tokens": "./src/send-tokens.js"
 	},
 	"dependencies": {
-		"bignumber.js": "^8.0.2",
-		"bip39": "^2.5.0",
+		"bignumber.js": "^9.0.0",
+		"bip39": "^3.0.2",
 		"colors": "^1.3.3",
 		"commander": "^2.19.0",
-		"ethereumjs-util": "^6.0.0",
+		"ethereumjs-util": "^6.2.0",
 		"ethereumjs-wallet": "^0.6.3",
-		"flex-contract": "^1.9.0",
-		"flex-ether": "^1.3.0",
-		"lodash": "^4.17.11",
+		"flex-contract": "^1.10.2",
+		"flex-ether": "^1.6.3",
+		"lodash": "^4.17.15",
 		"mz": "^2.7.0",
 		"prompt": "^1.0.0"
 	},

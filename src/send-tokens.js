@@ -27,7 +27,7 @@ program
 	.action(async function (token, to, amount) {
 		try {
 			const r = await sendTokens(token, to, amount, this);
-			process.exit(r ? 0 : -1);
+			process.exit(0);
 		} catch (err) {
 			console.error(err);
 			process.exit(-1);
